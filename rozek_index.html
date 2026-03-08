@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rozek</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<body>
+
+<!-- ══ AUTH OVERLAY — Multiusuario v17 ══ -->
+<div class="auth-overlay hidden" id="auth-overlay">
+  <div class="auth-box" id="auth-box">
+    <div class="auth-logo">R</div>
+    <div class="auth-title">Rozek</div>
+    <div class="auth-sub" id="auth-sub">Inicia sesión para sincronizar tu memoria entre dispositivos.</div>
+    <div id="auth-panel-login" style="display:flex;flex-direction:column;gap:12px;">
+      <input class="auth-input" id="auth-username" type="text" placeholder="Usuario" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input class="auth-input" id="auth-password" type="password" placeholder="Contraseña" autocomplete="off"/>
+
+      <div class="auth-err" id="auth-err"></div>
+      <button class="auth-btn" id="auth-login-btn" onclick="UserAuth.login()">Entrar</button>
+      <div class="auth-sep"><span style="color:var(--muted);font-family:'Sora',sans-serif;font-size:12px;">o</span></div>
+      <button class="auth-btn sec" onclick="UserAuth.showRegister()">Crear cuenta nueva</button>
+      <button class="auth-btn sec" onclick="UserAuth.skipAuth()" style="margin-top:-4px;">Continuar sin cuenta</button>
+    </div>
+    <div id="auth-panel-register" style="display:none;flex-direction:column;gap:12px;">
+      <input class="auth-input" id="reg-username" type="text" placeholder="Usuario (mín 3 caracteres)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input class="auth-input" id="reg-password" type="password" placeholder="Contraseña (mín 6 caracteres)"/>
+      <input class="auth-input" id="reg-password2" type="password" placeholder="Repetir contraseña"/>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="auth-btn" id="reg-btn" onclick="UserAuth.register()">Crear cuenta</button>
+      <button class="auth-btn sec" onclick="UserAuth.showLogin()">Ya tengo cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOT -->
+<div class="boot" id="boot">
+  <div class="boot-logo-wrap">
+    <div class="boot-logo-icon">R</div>
+  </div>
+  <div class="boot-title">Rozek</div>
+  <div class="boot-sub">Inteligencia adaptativa · RAG semántico · MiniLM</div>
+  <div class="boot-bar-wrap"><div class="boot-bar" id="boot-bar"></div></div>
+  <div class="boot-log" id="boot-log">Iniciando...</div>
+  <button id="boot-skip-btn" onclick="fallback('Usuario saltó carga')" style="display:none;margin-top:12px;background:none;border:1px solid var(--border);border-radius:8px;padding:8px 18px;color:var(--muted);font-size:12px;font-family:'Sora',sans-serif;cursor:pointer;">Usar modo rápido (sin embeddings)</button>
+</div>
+
+<div class="app-wrap">
+
+  <!-- ══ CHAT LIST PAGE ══ -->
+  <div class="chatlist-page" id="page-chatlist" style="display:flex;">
+    <div class="chatlist-header">
+      <button class="cl-icon-btn" onclick="toggleMenu()" aria-label="Menú">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+
+      <!-- Drawer overlay -->
+      <div class="cl-drawer-overlay" id="cl-drawer-overlay" onclick="closeMenu()"></div>
+
+      <!-- Drawer lateral -->
+      <div class="cl-drawer" id="cl-menu">
+        <div class="cl-drawer-header">
+          <div class="cl-drawer-logo">R</div>
+          <div class="cl-drawer-title">Rozek</div>
+        </div>
+
+        <div class="cl-drawer-body">
+          <!-- Sección principal -->
+          <div class="cl-drawer-section">
+            <div class="cl-drawer-section-label">Principal</div>
+            <button class="cl-drawer-item" onclick="switchToPage('teach');closeMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Enseñanza
+            </button>
+            <button class="cl-drawer-item" onclick="switchToPage('forge');closeMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              Code Forge
+            </button>
+            <button class="cl-drawer-item" onclick="toggleMemPanel();closeMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              Memoria
+            </button>
+          </div>
+
+          <!-- Sección configuración -->
+          <div class="cl-drawer-section">
+            <div class="cl-drawer-section-label">Configuración</div>
+            <button class="cl-drawer-item" onclick="openKeysModal();closeMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2 10.58 12.42M15 7l3 3 3.5-3.5-3-3M10 10l-5 5"/></svg>
+              API Keys
+            </button>
+            <button class="cl-drawer-item" onclick="exportAll();closeMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar memoria
+            </button>
+            <button class="cl-drawer-item" onclick="importMemoria();closeMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Importar memoria
+            </button>
+          </div>
+        </div>
+
+        <!-- Footer con usuario -->
+        <div class="cl-drawer-footer">
+          <div class="cl-drawer-item danger" id="menu-logout" onclick="UserAuth.logout();closeMenu()" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </div>
+          <div class="cl-drawer-user" id="drawer-user-row" style="display:none;">
+            <div class="cl-drawer-avatar" id="drawer-avatar">?</div>
+            <div class="cl-drawer-username" id="drawer-username">—</div>
+            <span class="cl-drawer-sync" id="drawer-sync">● sync</span>
+          </div>
+        </div>
+      </div>
+      <button class="cl-icon-btn" onclick="markAllRead()">✓≡</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px 8px;"><div class="chatlist-title" style="padding:0;">Chats</div><div id="user-chip-wrap"></div></div>
+    <div class="chatlist-search-wrap">
+      <span class="cl-search-icon">🔍</span>
+      <input class="chatlist-search" id="chatlist-search" placeholder="Buscar chats" oninput="renderChatList()"/>
+    </div>
+    <div class="chatlist-items" id="chatlist-items"></div>
+    <button class="new-chat-btn" onclick="newChat()">
+      <span class="new-chat-icon">+</span>
+      <span>Nuevo chat</span>
+    </button>
+  </div>
+
+  <!-- ══ CHAT PAGE ══ -->
+  <div class="rozek-chat-page" id="page-chat" style="display:none;">
+
+    <!-- Chat header -->
+    <div class="chat-header">
+      <button class="ch-back" onclick="goBack()">←</button>
+      <div class="ch-model-wrap" onclick="openModelModal()">
+        <span class="ch-model-name" id="ch-model-name">Rozek</span>
+        <span class="ch-model-arrow">▾</span>
+        <span class="ch-model-tag" id="ch-model-tag">llama-3.3-70b</span>
+      </div>
+      <button class="ch-more" onclick="toggleChatMenu()" aria-label="Más opciones">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+      <div class="ch-menu-overlay" id="ch-menu-overlay" onclick="closeChatMenu()"></div>
+      <div class="ch-menu" id="ch-menu">
+        <div class="ch-menu-item" onclick="switchToPage('teach');closeChatMenu()">
+          Enseñanza
+          <svg viewBox="0 0 24 24" fill="none"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <div class="ch-menu-item" onclick="toggleMemPanel();closeChatMenu()">
+          Memoria
+          <svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div class="ch-menu-item" onclick="showRemindersPanel();closeChatMenu()">
+          Recordatorios
+          <svg viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="ch-menu-sep"></div>
+        <div class="ch-menu-item" onclick="clearHistory();closeChatMenu()">
+          Limpiar historial
+          <svg viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        <div class="ch-menu-item" onclick="exportAll();closeChatMenu()">
+          Exportar memoria
+          <svg viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar" id="status-bar">Listo</div>
+
+    <div class="chat-layout" style="flex:1;overflow:hidden;min-height:0;display:flex;">
+      <div class="overlay" id="overlay" onclick="toggleMemPanel()"></div>
+
+      <!-- Memory side panel -->
+      <div class="mem-panel" id="mem-panel">
+        <div class="mem-inner">
+          <div class="psec">
+            <div class="ptitle">🧠 Enseñar rápido</div>
+            <div class="plabel">Trigger</div>
+            <input class="pinput" id="teach-trigger" placeholder="ej: ¿quién me creó?" maxlength="120"/>
+            <div class="plabel">Respuesta</div>
+            <textarea class="pinput" id="teach-response" rows="3" placeholder="ej: Te creó Juan 🙌"></textarea>
+            <button class="pbtn" onclick="quickTeach()">➕ Agregar</button>
+          </div>
+          <hr class="pdiv"/>
+          <div class="psec">
+            <div class="ptitle">📊 Estado</div>
+            <div class="pstats">
+              <div class="srow"><span>Modelo</span><span class="sval g" id="s-model">—</span></div>
+              <div class="srow"><span>Semántica</span><span class="sval" id="s-sem">0</span></div>
+              <div class="srow"><span>Episódica</span><span class="sval" id="s-epi">0</span></div>
+              <div class="srow"><span>Docs/Chunks</span><span class="sval c" id="s-chunks">0</span></div>
+              <div class="srow"><span>Documentos</span><span class="sval c" id="s-docs">0</span></div>
+              <div class="srow"><span>Cache embed.</span><span class="sval" id="s-cache">0</span></div>
+              <div class="srow"><span>Historial</span><span class="sval" id="s-hist">0</span></div>
+              <div class="srow"><span>Perfil</span><span class="sval" id="s-profile">—</span></div>
+              <div class="srow"><span>Resumen IA</span><span class="sval" id="s-sum">—</span></div>
+            </div>
+          </div>
+          <hr class="pdiv"/>
+          <div class="psec">
+            <div class="ptitle">🗂 Memoria</div>
+            <div class="mtabs">
+              <div class="mtab active" onclick="switchMemTab('semantic',this)">Sem.</div>
+              <div class="mtab" onclick="switchMemTab('episodic',this)">Epis.</div>
+              <div class="mtab" onclick="switchMemTab('chunks',this)">Docs</div>
+            </div>
+            <div class="mlist" id="mlist"></div>
+          </div>
+          <hr class="pdiv"/>
+          <div class="psec">
+            <button class="pbtn sec" onclick="clearHistory()" style="font-size:11px;">🗑 Limpiar historial</button>
+            <button class="pbtn sec" onclick="exportAll()" style="font-size:11px;">💾 Exportar todo</button>
+          </div>
+          <hr class="pdiv"/>
+          <div class="arch-box">
+            <span class="hi">v7 pipeline:</span><br/>
+            1 <span class="hi2">Intent</span> → tools<br/>
+            2 <span class="hi2">KB</span> rápido local<br/>
+            3 <span class="hi2">MiniLM top-5</span><br/>
+            4 <span class="hi2">Heuristic rank</span> 0ms<br/>
+            &nbsp;&nbsp;cos×.7+jacc×.2+rec×.1<br/>
+            5 <span class="hi2">LLM rerank</span> si ambiguo<br/>
+            6 <span class="hi2">Groq</span>+historial<br/>
+            7 <span class="hi">Implicit learn</span> auto
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="chat-wrap">
+        <div class="msgs" id="msgs">
+          <div class="m b">
+            <div class="ic">R</div>
+            <div>
+              <div class="bub">
+                <p>¡Hola! Soy <strong>Rozek</strong> 🧠</p>
+                <p>💬 <strong>Chat</strong>: conversa normalmente<br/>
+                📚 <strong>Enseñanza</strong>: sube documentos .txt, .md, .json<br/>
+                🧠 <strong>Aprendo</strong> de cada conversación<br/>
+                👤 Dime tu nombre e intereses</p>
+              </div>
+              <div class="msg-meta">
+                <span class="badge tool">⚡ rozek v7.5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <!-- input bar sits OUTSIDE chat-layout so it always shows -->
+  <div class="rozek-inp-wrap">
+    <div class="attach-prev" id="attach-prev">
+      <span>📎</span><span class="ap-name" id="ap-name"></span>
+      <button class="ap-rm" onclick="clearAttach()">✕</button>
+    </div>
+    <div class="rozek-inp-box">
+      <input id="inp" type="text" class="rozek-inp" placeholder="Responder a Rozek..."/>
+      <div class="rozek-inp-actions">
+        <button class="rozek-act-btn" onclick="openAttachModal()" title="Adjuntar">+</button>
+        <button class="rozek-act-btn mic-btn" id="mic-btn" onclick="toggleMic()" title="Voz (mantén para hablar)">🎤</button>
+        <button class="rozek-send-btn" id="btn" onclick="send()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept="image/*,.txt" style="display:none" onchange="handleFile(this)"/>
+  </div>
+  </div><!-- end rozek-chat-page -->
+
+  <!-- ATTACH MODAL (outside all pages, always accessible) -->
+  <div class="attach-modal-bg" id="attach-modal-bg" onclick="closeAttachModal()"></div>
+  <div class="attach-modal" id="attach-modal">
+    <div class="attach-modal-handle"></div>
+    <div class="attach-modal-header">
+      <button class="attach-modal-close" onclick="closeAttachModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="attach-modal-title">Agregar al chat</div>
+      <div style="width:30px;"></div>
+    </div>
+    <div class="attach-modal-grid">
+      <div class="attach-modal-item" onclick="closeAttachModal()">
+        <svg class="attach-modal-item-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <div class="attach-modal-label">Cámara</div>
+      </div>
+      <div class="attach-modal-item" onclick="document.getElementById('file-input').click();closeAttachModal()">
+        <svg class="attach-modal-item-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <div class="attach-modal-label">Fotos</div>
+      </div>
+      <div class="attach-modal-item" onclick="document.getElementById('file-input').click();closeAttachModal()">
+        <svg class="attach-modal-item-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        <div class="attach-modal-label">Archivos</div>
+      </div>
+    </div>
+    <div class="attach-modal-rows">
+      <div class="attach-modal-row">
+        <svg class="attach-row-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="attach-row-label">Búsqueda web</span>
+        <div class="attach-toggle active" id="web-toggle" onclick="this.classList.toggle('active')"></div>
+      </div>
+      <div class="attach-modal-row">
+        <svg class="attach-row-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span class="attach-row-label">Expression Mode <span class="attach-row-sub">emoji adaptativo</span></span>
+        <div class="attach-toggle" id="expression-toggle" onclick="toggleExpressionMode()"></div>
+      </div>
+      <div class="attach-modal-row">
+        <svg class="attach-row-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <span class="attach-row-label">Rozek habla <span class="attach-row-sub" style="cursor:pointer;color:var(--accent);" onclick="closeAttachModal();setTimeout(openVoiceSelector,200);">⚙ elegir voz</span></span>
+        <div class="attach-toggle" id="voice-toggle" onclick="toggleVoiceMode()"></div>
+      </div>
+      <div class="attach-modal-row">
+        <svg class="attach-row-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="attach-row-label">Modo Autónomo</span>
+        <div class="attach-toggle" id="autonomous-toggle" onclick="toggleAutonomousMode()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ENSEÑANZA PAGE ══ -->
+  <div class="teach-page-wrap" id="page-teach" style="display:none;">
+    <div class="teach-header">
+      <button class="teach-back" onclick="switchToPage('chat')">←</button>
+      <div class="teach-header-title">Enseñanza</div>
+      <div class="model-badge">
+        <div class="mdot loading" id="mdot"></div>
+        <span id="mlabel">cargando...</span>
+      </div>
+    </div>
+    <div class="teach-layout" style="flex:1;overflow:hidden;">
+
+      <!-- LEFT: ingesta -->
+      <div class="teach-left">
+
+        <div class="tsec">
+          <div class="ttitle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Subir documento
+          </div>
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('teach-file').click()">
+            <div class="dz-icon">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </div>
+            <div class="dz-title">Arrastra o haz clic</div>
+            <div class="dz-sub">.txt · .md · .json</div>
+          </div>
+          <input type="file" id="teach-file" accept=".txt,.md,.json" style="display:none" onchange="ingestFile(this)"/>
+          <div class="progress-wrap" id="prog-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+          <div class="progress-log" id="prog-log"></div>
+        </div>
+
+        <hr class="pdiv"/>
+
+        <div class="tsec">
+          <div class="ttitle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+            Texto directo
+          </div>
+          <textarea class="tinput" id="teach-text" rows="5" placeholder="Pega o escribe conocimiento aquí directamente...&#10;&#10;ej: Mi nombre es Juan. Creé este chatbot en 2025. Me gusta Roblox..."></textarea>
+          <input class="tinput" id="teach-docname" placeholder="Nombre del documento (ej: sobre-mi.txt)" style="margin-top:5px;"/>
+          <button class="tbtn" onclick="ingestText()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Indexar texto
+          </button>
+        </div>
+
+        <hr class="pdiv"/>
+
+        <div class="tsec">
+          <div class="ttitle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Estadísticas
+          </div>
+          <div class="teach-stats">
+            <div class="ts-row"><span>Documentos</span><span class="ts-val" id="ts-docs">0</span></div>
+            <div class="ts-row"><span>Chunks</span><span class="ts-val" id="ts-chunks">0</span></div>
+            <div class="ts-row"><span>Vectorizados</span><span class="ts-val" id="ts-vecs">0</span></div>
+            <div class="ts-row"><span>Cobertura</span><span class="ts-val" id="ts-cov">0%</span></div>
+          </div>
+        </div>
+
+        <hr class="pdiv"/>
+
+        <div class="tsec">
+          <button class="tbtn sec" onclick="clearAllDocs()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Borrar todos los docs
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: knowledge base viewer -->
+      <div class="teach-right">
+        <div class="kb-header">
+          <div class="kb-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Knowledge Base
+          </div>
+          <input class="kb-search" id="kb-search" placeholder="Buscar en docs..." oninput="renderKB()"/>
+          <div class="kb-filter">
+            <div class="kbf active" onclick="setKBFilter('all',this)">Todo</div>
+            <div class="kbf" onclick="setKBFilter('file',this)">Archivos</div>
+            <div class="kbf" onclick="setKBFilter('text',this)">Texto</div>
+          </div>
+        </div>
+        <div class="kb-list" id="kb-list">
+          <div class="kb-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--muted2)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <div>Sin documentos aún</div>
+            <div style="font-size:10px;color:var(--muted2);">Sube un archivo o pega texto a la izquierda</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- end teach-page-wrap -->
+
+</div><!-- end app-wrap -->
+
+<!-- ══ MODEL SELECTOR MODAL ══ -->
+<div class="model-modal-bg" id="model-modal-bg" onclick="closeModelModal()"></div>
+<div class="model-modal" id="model-modal">
+  <div class="model-modal-header">
+    <span class="model-modal-title">🤖 Seleccionar modelo</span>
+    <button class="model-modal-close" onclick="closeModelModal()">✕</button>
+  </div>
+
+  <div class="model-group-title">⚡ Rápidos y económicos</div>
+  <div class="model-item" id="mi-llama-8b" onclick="selectModel('llama-3.1-8b-instant','Llama 3.1 8B','⚡')">
+    <div class="model-item-icon" style="background:rgba(52,211,153,.12);">⚡</div>
+    <div class="model-item-info">
+      <div class="model-item-name">Llama 3.1 8B Instant</div>
+      <div class="model-item-desc">Rápido, económico, bueno para RAG diario</div>
+      <div class="model-item-badges"><span class="model-badge fast">rápido</span><span class="model-badge fast">+ tokens/día</span></div>
+    </div>
+    <div class="model-item-check" id="mc-llama-8b"></div>
+  </div>
+  <div class="model-item" id="mi-gemma2" onclick="selectModel('gemma2-9b-it','Gemma 2 9B','🔷')">
+    <div class="model-item-icon" style="background:rgba(96,165,250,.12);">🔷</div>
+    <div class="model-item-info">
+      <div class="model-item-name">Gemma 2 9B (Google)</div>
+      <div class="model-item-desc">De Google, límite de tokens separado</div>
+      <div class="model-item-badges"><span class="model-badge fast">rápido</span><span class="model-badge long">límite propio</span></div>
+    </div>
+    <div class="model-item-check" id="mc-gemma2"></div>
+  </div>
+
+  <div class="model-group-title">🧠 Potentes y versátiles</div>
+  <div class="model-item" id="mi-llama-70b" onclick="selectModel('llama-3.3-70b-versatile','Llama 3.3 70B','🦙')">
+    <div class="model-item-icon" style="background:rgba(139,127,255,.12);">🦙</div>
+    <div class="model-item-info">
+      <div class="model-item-name">Llama 3.3 70B Versatile</div>
+      <div class="model-item-desc">El más potente, consume más tokens/día</div>
+      <div class="model-item-badges"><span class="model-badge smart">más potente</span><span class="model-badge limit">100k tokens/día</span></div>
+    </div>
+    <div class="model-item-check" id="mc-llama-70b"></div>
+  </div>
+  <div class="model-item" id="mi-llama-70b-old" onclick="selectModel('llama-3.1-70b-versatile','Llama 3.1 70B','🦙')">
+    <div class="model-item-icon" style="background:rgba(139,127,255,.12);">🦙</div>
+    <div class="model-item-info">
+      <div class="model-item-name">Llama 3.1 70B Versatile</div>
+      <div class="model-item-desc">Versión anterior, límite de tokens propio</div>
+      <div class="model-item-badges"><span class="model-badge smart">potente</span><span class="model-badge long">límite propio</span></div>
+    </div>
+    <div class="model-item-check" id="mc-llama-70b-old"></div>
+  </div>
+  <div class="model-item" id="mi-mixtral" onclick="selectModel('mixtral-8x7b-32768','Mixtral 8x7B','🌀')">
+    <div class="model-item-icon" style="background:rgba(245,158,11,.12);">🌀</div>
+    <div class="model-item-info">
+      <div class="model-item-name">Mixtral 8x7B</div>
+      <div class="model-item-desc">Contexto largo (32k), bueno para documentos grandes</div>
+      <div class="model-item-badges"><span class="model-badge long">contexto 32k</span><span class="model-badge smart">versátil</span></div>
+    </div>
+    <div class="model-item-check" id="mc-mixtral"></div>
+  </div>
+
+  <div class="model-group-title">🚀 Última generación</div>
+  <div class="model-item" id="mi-llama4-scout" onclick="selectModel('meta-llama/llama-4-scout-17b-16e-instruct','Llama 4 Scout 17B','🔭')">
+    <div class="model-item-icon" style="background:rgba(244,114,182,.12);">🔭</div>
+    <div class="model-item-info">
+      <div class="model-item-name">Llama 4 Scout 17B</div>
+      <div class="model-item-desc">Llama 4, visión integrada, multimodal</div>
+      <div class="model-item-badges"><span class="model-badge vision">visión</span><span class="model-badge smart">nueva gen</span></div>
+    </div>
+    <div class="model-item-check" id="mc-llama4-scout"></div>
+  </div>
+  <div class="model-item" id="mi-deepseek" onclick="selectModel('deepseek-r1-distill-llama-70b','DeepSeek R1 70B','🧬')">
+    <div class="model-item-icon" style="background:rgba(16,185,129,.12);">🧬</div>
+    <div class="model-item-info">
+      <div class="model-item-name">DeepSeek R1 70B</div>
+      <div class="model-item-desc">Razonamiento profundo tipo CoT</div>
+      <div class="model-item-badges"><span class="model-badge smart">razonamiento</span><span class="model-badge long">CoT</span></div>
+    </div>
+    <div class="model-item-check" id="mc-deepseek"></div>
+  </div>
+
+  <div style="height:30px;"></div>
+</div>
+
+<!-- ══ API KEYS MODAL ══ -->
+<div class="keys-modal-bg" id="keys-modal-bg" onclick="closeKeysModal()"></div>
+<div class="keys-modal" id="keys-modal">
+  <div class="keys-modal-header">
+    <span class="keys-modal-title">🔑 API Keys de Groq</span>
+    <button class="keys-modal-close" onclick="closeKeysModal()">✕</button>
+  </div>
+  <div class="keys-modal-body">
+    <div id="keys-list"></div>
+    <div class="keys-add-row">
+      <input class="keys-add-input" id="new-key-input" type="password"
+        placeholder="gsk_... pegar nueva key aquí"
+        onkeydown="if(event.key==='Enter')addGroqKey()"/>
+      <button class="keys-add-btn" onclick="addGroqKey()">+ Agregar</button>
+    </div>
+    <div class="keys-hint">
+      🔄 Round-robin: Rozek distribuye las llamadas entre todas las keys automáticamente.<br/>
+      📊 Útil para multiplicar el límite de tokens/día de Groq Free.
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script src="app.js"></script>
+</body>
+</html>
